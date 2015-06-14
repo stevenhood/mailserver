@@ -1,0 +1,166 @@
+sxh22u@bann:~> telnet localhost 4123
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
++OK POP3 server ready
+USER alex
++OK alex is a valid mailbox USER alex
+PASS hello123
++OK maildrop locked and ready PASS hello123
+list
++OK 3 messages (173293 octets)
+1 1301
+2 2722
+3 169270
+.
+LIST 1
++OK 1 1301
+LIST 2
++OK 2 2722
+LIST 3
++OK 3 169270
+UIDL
++OK
+1 Nj!oogfjA?`f!fhsjXop4J&yby?XW,L0xM:R>y"]sR@b<Pz+SC
+2 D*PfZ`v43_%4NiI1v{_`SA!~tM5yK{h(D|LID+V&%d\QoLWU2.
+3 rUi_^I8(%kQuYxZW*4f;7egWZLfJUn(R@Rdyg]p}UtP+Tg@nAj
+.
+UIDL 1
++OK 1 Nj!oogfjA?`f!fhsjXop4J&yby?XW,L0xM:R>y"]sR@b<Pz+SC
+UIDL 2
++OK 2 D*PfZ`v43_%4NiI1v{_`SA!~tM5yK{h(D|LID+V&%d\QoLWU2.
+UIDL 3
++OK 3 rUi_^I8(%kQuYxZW*4f;7egWZLfJUn(R@Rdyg]p}UtP+Tg@nAj
+STAT
++OK 3 173293
+DELE 2
++OK message 2 deleted DELE 2
+LIST
++OK 2 messages (170571 octets)
+1 1301
+3 169270
+.
+LIST 2
+-ERR no such message
+LIST 1
++OK 1 1301
+UIDL
++OK
+1 Nj!oogfjA?`f!fhsjXop4J&yby?XW,L0xM:R>y"]sR@b<Pz+SC
+3 rUi_^I8(%kQuYxZW*4f;7egWZLfJUn(R@Rdyg]p}UtP+Tg@nAj
+.
+UIDL 2
+-ERR no such message
+UIDL 3
++OK 3 rUi_^I8(%kQuYxZW*4f;7egWZLfJUn(R@Rdyg]p}UtP+Tg@nAj
+RSET
++OK RSET
+LIST
++OK 3 messages (173293 octets)
+1 1301
+2 2722
+3 169270
+.
+STAT
++OK 3 173293
+UIDL
++OK
+1 Nj!oogfjA?`f!fhsjXop4J&yby?XW,L0xM:R>y"]sR@b<Pz+SC
+2 D*PfZ`v43_%4NiI1v{_`SA!~tM5yK{h(D|LID+V&%d\QoLWU2.
+3 rUi_^I8(%kQuYxZW*4f;7egWZLfJUn(R@Rdyg]p}UtP+Tg@nAj
+.
+TOP 2 5
++OK
+Received: from pat.cs.nott.ac.uk by robin.Cs.Nott.AC.UK id aa00499;
+          29 Sep 2006 14:07 BST
+Received: from localhost by pat.Cs.Nott.AC.UK id aa02418; 29 Sep 2006 14:07 BST
+Received: from marian.cs.nott.ac.uk by pat.Cs.Nott.AC.UK id aa02051;
+	29 Sep 2006 14:06 BST
+Received: from ackerman.cs.nott.ac.uk by marian.Cs.Nott.AC.UK id aa00265;
+	29 Sep 2006 14:06 BST
+Message-ID: <451D19E8.10700@cs.nott.ac.uk>
+Date: Fri, 29 Sep 2006 14:04:40 +0100
+From: Dario Landa Silva <jds@Cs.Nott.AC.UK>
+User-Agent: Mozilla Thunderbird 1.0.6 (Windows/20050716)
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: tut-jds-1@Cs.Nott.AC.UK, tut-jds-3@Cs.Nott.AC.UK, tgs06u@Cs.Nott.AC.UK
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc:  
+Subject: [tut-jds-3] 1st G51TUT meeting
+X-BeenThere: tut-jds-3@cs.nott.ac.uk
+X-Mailman-Version: 2.1.5
+Precedence: list
+List-Id: Tutor jds 3rd year tutees <tut-jds-3.cs.nott.ac.uk>
+List-Unsubscribe: <http://www.cs.nott.ac.uk/mailman/listinfo/tut-jds-3>,
+	<mailto:tut-jds-3-request@cs.nott.ac.uk?subject=unsubscribe>
+List-Archive: <http://www.cs.nott.ac.uk/mailman/private/tut-jds-3>
+List-Post: <mailto:tut-jds-3@cs.nott.ac.uk>
+List-Help: <mailto:tut-jds-3-request@cs.nott.ac.uk?subject=help>
+List-Subscribe: <http://www.cs.nott.ac.uk/mailman/listinfo/tut-jds-3>,
+	<mailto:tut-jds-3-request@cs.nott.ac.uk?subject=subscribe>
+Sender: tut-jds-3-bounces@Cs.Nott.AC.UK
+Errors-To: tut-jds-3-bounces@cs.nott.ac.uk
+
+Hello Everyone
+
+Thanks to all those that came already to my office for the first brief 
+meeting on Wednesday. We will have our first 'formal' meeting of this 
+academic year on Friday 6-Oct at 10am.
+. TOP 2 5
+RETR 1
++OK
+Received: from pat.cs.nott.ac.uk by robin.Cs.Nott.AC.UK id ac08796;
+          21 Sep 2006 19:00 BST
+To: ajp06u@Cs.Nott.AC.UK
+Subject: Welcome to CSiT at Nottingham
+From: Nick Reynolds <nir@Cs.Nott.AC.UK>
+Date: Thu, 21 Sep 2006 18:59:43 BST
+Sender: root@Cs.Nott.AC.UK
+Message-ID:  <200609211859.aa28057@pat.Cs.Nott.AC.UK>
+
+Dear ajp06u,
+
+As you are reading this email you will have collected your login details
+for the school's machines and successfully logged in. Contained in this
+mail are pointers to a few WWW addresses which it is suggested you take
+a look at together with a little information about the Technical Services
+Group (TSG).
+
+
+Technical Services Group
+========================
+
+TSG provide support for the School's technical equipment.
+
+Please take a look at the TSG Web Pages which contain useful information
+on using the machines in the school.
+
+   http://www.cs.nott.ac.uk/TSG/
+
+A good place to start is the "Overview of Services" page:
+
+   http://www.cs.nott.ac.uk/TSG/overview/
+
+If you have any technical questions or require technical assistance,
+please contact the user support office:
+
+   http://www.cs.nott.ac.uk/TSG/general_info/user_support.html
+
+Or use the CTS tracking system at:
+
+   http://www.cs.nott.ac.uk/TSG/CTS/
+
+
+Regards,
+Nick Reynolds
+. RETR 1
+DELE 3
++OK message 3 deleted DELE 3
+STAT
++OK 2 4023
+QUIT
++OK 1 messages removed, POP3 server signing off (2 messages left) QUIT
+Connection closed by foreign host.
+sxh22u@bann:~> 
