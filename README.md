@@ -11,5 +11,5 @@ POP3 Mailserver in Java
   * PASSWORD  the MySQL password
 
 ## Run
-* The port and timeout can be specified on the command line: Pop3Server <port> <timeout>
+* The port and timeout can be specified on the command line: Pop3Server [PORT] [TIMEOUT]
 * The default port is 110 and timeout is 60,000 ms or 10 minutes.
