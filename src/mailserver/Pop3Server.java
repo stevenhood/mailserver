@@ -94,7 +94,7 @@ public class Pop3Server {
 				timeout = Integer.parseInt(args[1]) * 1000;
 
 			} catch (NumberFormatException e) {
-				System.err.println("Usage: Pop3Server <port> <timeout>");
+				System.err.println("Usage: Pop3Server [PORT] [TIMEOUT]");
 				System.err.println("Error: Port and timeout must be integers");
 				return;
 			}
