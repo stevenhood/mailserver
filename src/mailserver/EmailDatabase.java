@@ -164,44 +164,42 @@ public class EmailDatabase implements Database {
 
 	public String getMessage(int messageNumber, int lineCount) {
 		if (iMailIDs.size() > messageNumber && !markedDeleted[messageNumber]) {
-			String messageBody = "";
+			String fullMessageBody = "";
 
 			try {
 				ResultSet rs = statement.executeQuery("SELECT txMailContent FROM m_Mail WHERE iMailID = " + iMailIDs.get(messageNumber));
 				rs.next();
-				messageBody = rs.getString("txMailContent");
+				fullMessageBody = rs.getString("txMailContent");
 
 			} catch (SQLException e) {
 				if (debug)
 					e.printStackTrace();
 			}
 
-			String response = "+OK\r\n";
-
 			// RETR (return whole message, CommandInterpreter calls with
 			// lineCount = -1)
 			// TOP (return lineCount lines)
 
-			// Split the header from the body
-			String[] header_body = messageBody.split("\n\n", 2);
+			// Split the header from the body into two array elements
+			String[] header_body = fullMessageBody.split("\n\n", 2);
 			// Last position in lines[] contains the remainder of the
 			// unsplit message that is not to be sent
 			String[] lines = header_body[1].split("\n", lineCount + 1);
-			StringBuilder builder = new StringBuilder();
 
+			StringBuilder response = new StringBuilder("+OK\r\n");
+			// Concatenate the header and partial message body
+			response.append(header_body[0]).append("\n\n");
 			for (int i = 0; i < lines.length - 1; i++) {
 				if (lines[i].startsWith(".")) {
 					// Byte-stuff line by prepending with termination octet
-					lines[i] = "." + lines[i];
+					response.append(".");
 				}
-				builder.append(lines[i] + "\r\n");
+				response.append(lines[i]).append("\r\n");
 			}
+			// Append the termination octet
+			response.append(".");
 
-			// Concatenate the header and partial message body
-			messageBody = header_body[0] + "\n\n" + builder.toString();
-
-			// Append the message and termination octet
-			return response + messageBody + ".";
+			return response.toString();
 
 		} else {
 			return "-ERR no such message";
