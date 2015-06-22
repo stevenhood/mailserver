@@ -186,16 +186,16 @@ public class CommandInterpreter {
 		} else {
 			// Concat all arguments (excluding command in index 0) together as
 			// the whole password
-			String password = "";
+			StringBuilder password = new StringBuilder();
 			for (int i = 1; i < arguments.length; i++) {
-				password += arguments[i];
+				password.append(arguments[i]);
 
 				if (i < arguments.length - 1) {
-					password += " ";
+					password.append(" ");
 				}
 			}
 
-			String response = database.pass(password);
+			String response = database.pass(password.toString());
 
 			if (response.contains(OK)) {
 				// Enter the TRANSACTION state if authorisation is

@@ -12,7 +12,7 @@ import java.util.Arrays;
  * Note: A Login class must contain the information for logging onto the
  * MySQL server, including the HOST name, USERNAME and PASSWORD.
  * 
- * @author steven
+ * @author Steven Hood
  *
  */
 public class EmailDatabase implements Database {
