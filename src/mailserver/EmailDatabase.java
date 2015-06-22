@@ -222,16 +222,17 @@ public class EmailDatabase implements Database {
 		if (messageNumber < 1) {
 			// Return UIDL for all unmarked messages
 			try {
-				String response = "+OK\r\n";
-				StringBuilder builder = new StringBuilder();
+				StringBuilder response = new StringBuilder("+OK\r\n");
 				ResultSet rs = statement.executeQuery("SELECT iMailID, vchUIDL FROM m_Mail WHERE iMaildropID = " + maildropID);
 				while (rs.next()) {
 					int i = getMessageNumber(rs.getInt("iMailID"));
 					if (!markedDeleted[i]) {
-						builder.append(i + " " + rs.getString("vchUIDL") + "\r\n");
+						response.append(i).append(" ")
+								.append(rs.getString("vchUIDL")).append("\r\n");
 					}
 				}
-				return response + builder.toString() + ".";
+				response.append(".");
+				return response.toString();
 
 			} catch (SQLException e) {
 				if (debug)
