@@ -323,7 +323,7 @@ public class EmailDatabase implements Database {
 		String query = "SELECT iMailID, LENGTH(txMailContent) AS octets FROM m_Mail WHERE iMaildropID = " + maildropID;
 		if (messageNumber > 0) {
 			// Find size of specific message instead of total size
-			query.concat(" AND iMailID = " + iMailIDs.get(messageNumber));
+			query += " AND iMailID = " + iMailIDs.get(messageNumber);
 		}
 
 		try {
