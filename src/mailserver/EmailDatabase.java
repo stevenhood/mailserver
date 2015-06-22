@@ -141,15 +141,17 @@ public class EmailDatabase implements Database {
 	public String list(int messageNumber) {
 		if (messageNumber < 1) {
 			// Return total number and size of all unmarked messages
-			String response = "+OK " + numUndeleted + " messages (" + getOctets(-1) + " octets)\r\n";
+			StringBuilder response = new StringBuilder();
+			response.append("+OK ").append(numUndeleted).append(" messages (")
+				.append(getOctets(-1)).append(" octets)\r\n");
 
-			StringBuilder builder = new StringBuilder();
 			for (int i = 1; i < iMailIDs.size(); i++) {
 				if (!markedDeleted[i]) {
-					builder.append(i + " " + getOctets(i) + "\r\n");
+					response.append(i).append(" ").append(getOctets(i)).append("\r\n");
 				}
 			}
-			return response + builder.toString() + ".";
+			response.append(".");
+			return response.toString();
 
 		} else if (iMailIDs.size() > messageNumber && !markedDeleted[messageNumber]) {
 			// Return size of message messageNumber if unmarked
