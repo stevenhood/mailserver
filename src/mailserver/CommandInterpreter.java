@@ -38,7 +38,7 @@ public class CommandInterpreter {
 
 	/**
 	 * Interpret a request from a client and return a response.
-	 * 
+	 *
 	 * @param input
 	 *            POP3 command to be interpreted.
 	 * @return the server's response string.
