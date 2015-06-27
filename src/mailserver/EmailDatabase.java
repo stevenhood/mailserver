@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Note: A Login class must contain the information for logging onto the
@@ -26,11 +27,11 @@ public class EmailDatabase implements Database {
 	private int maildropID;
 
 	/**
-	 * An ArrayList of the mailbox's iMailIDs, assigned when a PASS command is
+	 * A List of the mailbox's iMailIDs, assigned when a PASS command is
 	 * successfully executed. The zeroth index is ignored by the program, hence
 	 * it is set to null.
 	 */
-	private ArrayList<Integer> iMailIDs;
+	private List<Integer> iMailIDs;
 
 	/**
 	 * Index is set to true if the message has been marked as deleted. As with
