@@ -16,7 +16,7 @@ import java.util.List;
  * @author Steven Hood
  *
  */
-public class EmailDatabase implements Database {
+public class EmailDatabase implements IDatabase {
 
 	private Connection connection;
 	private Statement statement;

@@ -25,7 +25,7 @@ public class CommandInterpreter {
 	 * An implementation of the Database interface which contains all of the
 	 * server responses to send to the client.
 	 */
-	private Database database;
+	private IDatabase database;
 
 	private String[] arguments;
 

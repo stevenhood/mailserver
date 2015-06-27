@@ -1,6 +1,6 @@
 package mailserver;
 
-public interface Database {
+public interface IDatabase {
 
 	/**
 	 * Authenticates a user given as an argument of a USER command.
