@@ -22,6 +22,7 @@ public class TestPop3Server {
 				{ "USER claire", "PASS qazwsx", "DELE 1", "LIST", "LIST 2", "RETR 4", "TOP 1 100", "RSET", "STAT", "UIDL", "UIDL 2", "QUIT" }
 		};
 
+		// Default port
 		int port = 110;
 		int numSockets = 3;
 
