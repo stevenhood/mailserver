@@ -81,7 +81,7 @@ import java.sql.Statement;
  */
 public class Pop3Server {
 
-    private static boolean debug = false;
+    private static final String TAG = Pop3Server.class.getSimpleName();
 
     public static void main(String[] args) {
         int port, timeout;
@@ -129,7 +129,7 @@ public class Pop3Server {
             serverSocket.close();
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "main: Failed to accept new connection", e);
         }
     }
 
@@ -147,7 +147,7 @@ public class Pop3Server {
 
         } catch (SQLException | InstantiationException
                 | IllegalAccessException | ClassNotFoundException e) {
-            e.printStackTrace();
+            Log.e(TAG, "testConnection: Failed to connect to database", e);
             success = false;
         }
 

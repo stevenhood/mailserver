@@ -8,90 +8,107 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
+/**
+ * Facilitates receiving POP3 commands and sending responses to them in a
+ * separate thread.
+ */
 public class ClientConnection implements Runnable {
 
-	private static int nextid = 0;
-	private static boolean debug = false;
+    /** The next available unique ID to label a ClientConnection when logging. */
+    private static int sNextId = 0;
 
-	private Socket clientSocket;
-	private CommandInterpreter ci;
-	private BufferedReader in;
-	private BufferedWriter out;
-	private int id;
+    /** The socket that facilitates communication with the client. */
+    private Socket mClientSocket;
+    /** Used to interpret POP3 commands received from the client. */
+    private CommandInterpreter mCommandInterpreter;
+    /** Used to receive commands from the client. */
+    private BufferedReader mReader;
+    /** Used to send responses to the client. */
+    private BufferedWriter mWriter;
+    /** A unique ID for this ClientConnection to distinguish it in the log. */
+    private int mId;
 
-	public ClientConnection(Socket clientSocket, int timeout)
-			throws IOException {
-		this.clientSocket = clientSocket;
-		clientSocket.setSoTimeout(timeout);
+    /**
+     * Construct a ClientConnection.
+     *
+     * @param clientSocket the socket to communicate with the client
+     * @param timeout      the amount of time to wait for a response in milliseconds
+     *                     before closing the connection
+     * @throws IOException
+     */
+    public ClientConnection(Socket clientSocket, int timeout)
+            throws IOException {
 
-		ci = new CommandInterpreter();
-		in = new BufferedReader(new InputStreamReader(
-				clientSocket.getInputStream()));
-		out = new BufferedWriter(new OutputStreamWriter(
-				clientSocket.getOutputStream()));
-		id = nextid++;
+        mClientSocket = clientSocket;
+        clientSocket.setSoTimeout(timeout);
 
-		System.out.printf("New connection (id: %d) from %s\n", id, clientSocket
-				.getInetAddress().toString());
+        mCommandInterpreter = new CommandInterpreter();
+        mReader = new BufferedReader(new InputStreamReader(
+                clientSocket.getInputStream()));
+        mWriter = new BufferedWriter(new OutputStreamWriter(
+                clientSocket.getOutputStream()));
+        mId = sNextId++;
 
-		String ready = "+OK POP3 server ready\r\n";
-		printMessage(ready, "response");
+        System.out.printf("New connection (id: %d) from %s\n", mId, clientSocket
+                .getInetAddress().toString());
 
-		out.write(ready);
-		out.flush();
-	}
+        String ready = "+OK POP3 server ready\r\n";
+        printMessage(ready, "response");
 
-	@Override
-	public void run() {
-		String request, response;
-		boolean timedOut = false;
+        mWriter.write(ready);
+        mWriter.flush();
+    }
 
-		try {
-			while (!ci.isQuit()) {
+    @Override
+    public void run() {
+        String request;
+        String response;
+        boolean timedOut = false;
 
-				try {
-					request = in.readLine();
-					printMessage(request, "request");
-				} catch (SocketTimeoutException e) {
-					// Close socket after timeout
-					ci.timeout();
-					timedOut = true;
-					break;
-				}
+        try {
+            while (!mCommandInterpreter.isQuit()) {
 
-				response = ci.handleInput(request);
-				printMessage(response, "response");
-				out.write(response);
-				out.flush();
-			}
+                try {
+                    request = mReader.readLine();
+                    printMessage(request, "request");
 
-			clientSocket.close();
-			if (timedOut) {
-				System.out.printf("Connection (id: %d) from %s timed out.\n",
-						id, clientSocket.getInetAddress());
-			} else {
-				System.out.printf("Connection (id: %d) from %s was closed.\n",
-						id, clientSocket.getInetAddress());
-			}
+                } catch (SocketTimeoutException e) {
+                    // Close socket after timeout
+                    mCommandInterpreter.timeout();
+                    timedOut = true;
+                    break;
+                }
 
-		} catch (IOException | NullPointerException e) {
-			if (debug)
-				e.printStackTrace();
-		}
-	}
+                response = mCommandInterpreter.handleInput(request);
+                printMessage(response, "response");
+                mWriter.write(response);
+                mWriter.flush();
+            }
 
-	/**
-	 * Print the message to the console, without its newline character.
-	 * 
-	 * @param message
-	 * @param type
-	 */
-	private void printMessage(String message, String type) {
-		System.out.printf("%d %s: %s\n", id, type, message.replace("\n", "")
-				.replace("\r", ""));
-	}
+            mClientSocket.close();
 
-	public int getID() {
-		return id;
-	}
+            if (timedOut) {
+                System.out.printf("Connection (id: %d) from %s timed out.\n",
+                        mId, mClientSocket.getInetAddress());
+            } else {
+                System.out.printf("Connection (id: %d) from %s was closed.\n",
+                        mId, mClientSocket.getInetAddress());
+            }
+
+        } catch (IOException e) {
+            Log.e(ClientConnection.class.getSimpleName(),
+                    "run: An I/O error occurred", e);
+        }
+    }
+
+    /**
+     * Print the message to the console, without its newline character.
+     *
+     * @param message the message received
+     * @param type    the type of the message (request or response)
+     */
+    private void printMessage(String message, String type) {
+        System.out.printf("%d %s: %s\n", mId, type,
+                message.replace("\n", "").replace("\r", ""));
+    }
 }
