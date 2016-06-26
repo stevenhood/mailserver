@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 public class TestCommandInterpreter {
@@ -487,15 +486,27 @@ public class TestCommandInterpreter {
     /////////////////////////////////////////////////////////////////////////
 
     @Test
-    public void testRSET_Valid() {
-        String response = mCi.handleInput("RSET");
-        Assert.assertTrue(response.contains(OK));
+    public void testRsetValid() {
+        executeValidPassword();
+
+        String request = "RSET";
+        Mockito.doReturn(OK).when(mDatabase).rset();
+
+        String response = mCi.handleInput(request);
+        Assert.assertEquals(concat(OK, request), response);
     }
 
     @Test
-    public void testRSET_ExcessiveArgs() {
-        String response = mCi.handleInput("RSET abc");
-        Assert.assertTrue(response.contains(ERR));
+    public void testRsetExcessiveArgsReturnsError() {
+        executeValidPassword();
+
+        String request = "RSET a b";
+        Mockito.doReturn(OK).when(mDatabase).rset();
+
+        String expected = concat(CommandInterpreter.ERR_EXCESSIVEARGS, request);
+        String response = mCi.handleInput(request);
+
+        Assert.assertEquals(expected, response);
     }
 
     //////////////////////////////////////////////////////////////////////////
@@ -503,15 +514,27 @@ public class TestCommandInterpreter {
     /////////////////////////////////////////////////////////////////////////
 
     @Test
-    public void testSTAT_Valid() {
-        String response = mCi.handleInput("STAT");
-        Assert.assertTrue(response.contains(OK));
+    public void testStatValid() {
+        executeValidPassword();
+
+        String request = "STAT";
+        Mockito.doReturn(OK).when(mDatabase).stat();
+
+        String response = mCi.handleInput(request);
+        Assert.assertEquals(OK + CRLF, response);
     }
 
     @Test
-    public void testSTAT_ExcessiveArgs() {
-        String response = mCi.handleInput("STAT def");
-        Assert.assertTrue(response.contains(ERR));
+    public void testStatExcessiveArgsReturnsError() {
+        executeValidPassword();
+
+        String request = "STAT def";
+        Mockito.doReturn(OK).when(mDatabase).rset();
+
+        String expected = concat(CommandInterpreter.ERR_EXCESSIVEARGS, request);
+        String response = mCi.handleInput(request);
+
+        Assert.assertEquals(expected, response);
     }
 
     //////////////////////////////////////////////////////////////////////////
