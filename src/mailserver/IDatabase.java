@@ -57,7 +57,7 @@ public interface IDatabase {
      *
      * @param messageNumber number of message in mailbox.
      * @param lineCount     number of lines of message to return, starting from the
-     *                      body. If negative, return all lines.
+     *                      body. If negative, return all lines (RETR).
      * @return if the message exists, a positive response with the first
      * lineCount lines of the message body, or all lines, depending on
      * the value of lineCount. A negative response if the message does

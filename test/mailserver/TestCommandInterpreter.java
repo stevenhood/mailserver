@@ -279,53 +279,102 @@ public class TestCommandInterpreter {
         Assert.assertEquals(expected, response);
     }
 
-    // NOOP
+    //////////////////////////////////////////////////////////////////////////
+    //// NOOP
+    /////////////////////////////////////////////////////////////////////////
+
     @Test
-    public void testNOOP_Valid() {
-        String response = mCi.handleInput("NOOP");
-        Assert.assertTrue(response.contains(OK));
+    public void testNoopValid() {
+        executeValidPassword();
+        String request = "NOOP";
+        String response = mCi.handleInput(request);
+        Assert.assertEquals(concat(OK, request), response);
     }
 
     @Test
-    public void testNOOP_ExcessiveArgs() {
-        String response = mCi.handleInput("NOOP x");
-        Assert.assertTrue(response.contains(ERR));
+    public void testNoopExcessiveArgsReturnsError() {
+        executeValidPassword();
+        String request = "NOOP x";
+
+        String expected = concat(CommandInterpreter.ERR_EXCESSIVEARGS, request);
+        String response = mCi.handleInput(request);
+
+        Assert.assertEquals(expected, response);
     }
 
-    // RETR
-    @Test
-    public void testRETR_Valid() {
-        String response = mCi.handleInput("RETR 1");
-        // Valid request but still returns an error because there are no
-        // messages in the dummy database
-        Assert.assertTrue(response.contains(ERR));
-    }
+    //////////////////////////////////////////////////////////////////////////
+    //// RETR
+    /////////////////////////////////////////////////////////////////////////
 
     @Test
-    public void testRETR_NoArgs() {
-        String response = mCi.handleInput("RETR");
-        Assert.assertTrue(response.contains(ERR));
-    }
+    public void testRetrValid() {
+        executeValidPassword();
+        int messageNum = 1;
+        String request = "RETR " + messageNum;
+        Mockito.doReturn(OK).when(mDatabase).getMessage(messageNum, -1);
 
-    @Test
-    public void testRETR_ExcessiveArgs() {
-        String response = mCi.handleInput("RETR 1 2");
-        Assert.assertTrue(response.contains(ERR));
-    }
+        String response = mCi.handleInput(request);
 
-    @Test
-    public void testRETR_NonInt() {
-        String response = mCi.handleInput("RETR efg");
-        Assert.assertTrue(response.contains(ERR));
+        Mockito.verify(mDatabase, Mockito.times(1)).getMessage(messageNum, -1);
+        Assert.assertEquals(concat(OK, request), response);
     }
 
     @Test
-    public void testRETR_MessagenumLessThanOne() {
-        String response = mCi.handleInput("RETR 0");
-        Assert.assertTrue(response.contains(ERR));
+    public void testRetrMissingArgsReturnsError() {
+        executeValidPassword();
+        String request = "RETR";
+
+        String expected = concat(CommandInterpreter.ERR_MISSINGARGS, request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0))
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+        Assert.assertEquals(expected, response);
     }
 
-    // TOP
+    @Test
+    public void testRetrExcessiveArgsReturnsError() {
+        executeValidPassword();
+        String request = "RETR 1 2";
+
+        String expected = concat(CommandInterpreter.ERR_EXCESSIVEARGS, request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0))
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+        Assert.assertEquals(expected, response);
+    }
+
+    @Test
+    public void testRetrNonIntArgReturnsError() {
+        executeValidPassword();
+        String request = "RETR efg";
+
+        String expected = concat(CommandInterpreter.ERR_ARGS_NON_INT, request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0))
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+        Assert.assertEquals(expected, response);
+    }
+
+    @Test
+    public void testRetrMessagenumLessThanOneReturnsError() {
+        executeValidPassword();
+        String request = "RETR 0";
+
+        String expected = concat(CommandInterpreter.ERR_NEGMSGNUM, request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0))
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+        Assert.assertEquals(expected, response);
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    //// TOP
+    /////////////////////////////////////////////////////////////////////////
+
     @Test
     public void testTOP_ValidArgs() {
         String response = mCi.handleInput("TOP 1 2");
@@ -370,7 +419,10 @@ public class TestCommandInterpreter {
         Assert.assertTrue(response.contains(ERR));
     }
 
-    // RSET
+    //////////////////////////////////////////////////////////////////////////
+    //// RSET
+    /////////////////////////////////////////////////////////////////////////
+
     @Test
     public void testRSET_Valid() {
         String response = mCi.handleInput("RSET");
@@ -383,7 +435,10 @@ public class TestCommandInterpreter {
         Assert.assertTrue(response.contains(ERR));
     }
 
-    // STAT
+    //////////////////////////////////////////////////////////////////////////
+    //// STAT
+    /////////////////////////////////////////////////////////////////////////
+
     @Test
     public void testSTAT_Valid() {
         String response = mCi.handleInput("STAT");
@@ -396,7 +451,10 @@ public class TestCommandInterpreter {
         Assert.assertTrue(response.contains(ERR));
     }
 
-    // UIDL
+    //////////////////////////////////////////////////////////////////////////
+    //// UIDL
+    /////////////////////////////////////////////////////////////////////////
+
     @Test
     public void testUIDL_ValidArg() {
         String response = mCi.handleInput("UIDL 1");
@@ -427,7 +485,10 @@ public class TestCommandInterpreter {
         Assert.assertTrue(response.contains(ERR));
     }
 
-    // QUIT
+    //////////////////////////////////////////////////////////////////////////
+    //// QUIT
+    /////////////////////////////////////////////////////////////////////////
+
     @Test
     public void testQUIT_Valid() {
         String response = mCi.handleInput("QUIT");
