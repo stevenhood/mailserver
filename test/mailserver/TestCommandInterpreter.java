@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 public class TestCommandInterpreter {
@@ -546,33 +547,70 @@ public class TestCommandInterpreter {
     /////////////////////////////////////////////////////////////////////////
 
     @Test
-    public void testUIDL_ValidArg() {
-        String response = mCi.handleInput("UIDL 1");
-        Assert.assertTrue(response.contains(ERR));
+    public void testUidlValidArg() {
+        executeValidPassword();
+
+        int messageNum = 42;
+        String request = "UIDL " + messageNum;
+        Mockito.doReturn(OK).when(mDatabase).uidl(messageNum);
+
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(1)).uidl(messageNum);
+        Assert.assertEquals(OK + CRLF, response);
     }
 
     @Test
-    public void testUIDL_ValidNoArg() {
+    public void testUidlValidNoArg() {
+        executeValidPassword();
+
+        Mockito.doReturn(OK).when(mDatabase).uidl(Mockito.anyInt());
+        ArgumentCaptor<Integer> argumentCaptor =
+                ArgumentCaptor.forClass(Integer.class);
+
         String response = mCi.handleInput("UIDL");
-        Assert.assertTrue(response.contains(ERR));
+        Mockito.verify(mDatabase, Mockito.times(1))
+                .uidl(argumentCaptor.capture());
+        Assert.assertEquals(OK + CRLF, response);
+        Assert.assertTrue(argumentCaptor.getValue() < 0);
     }
 
     @Test
-    public void testUIDL_ExcessiveArgs() {
-        String response = mCi.handleInput("UIDL 3 4");
-        Assert.assertTrue(response.contains(ERR));
+    public void testUidlExcessiveArgsReturnsError() {
+        executeValidPassword();
+
+        String request = "UIDL 3 4";
+
+        String expected = CommandInterpreter.ERR_EXCESSIVEARGS + CRLF;
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0)).uidl(Mockito.anyInt());
+        Assert.assertEquals(expected, response);
     }
 
     @Test
-    public void testUIDL_NonInt() {
+    public void testUidlNonIntMessagenumReturnsError() {
+        executeValidPassword();
+
+        String expected = CommandInterpreter.ERR_ARGS_NON_INT + CRLF;
         String response = mCi.handleInput("UIDL ghi");
-        Assert.assertTrue(response.contains(ERR));
+
+        Mockito.verify(mDatabase, Mockito.times(0)).uidl(Mockito.anyInt());
+        Assert.assertEquals(expected, response);
     }
 
     @Test
-    public void testUIDL_MessagenumLessThanOne() {
-        String response = mCi.handleInput("UIDL 0");
-        Assert.assertTrue(response.contains(ERR));
+    public void testUidlMessagenumLessThanOneReturnsError() {
+        executeValidPassword();
+
+        int messageNum = -3;
+        String request = "UIDL " + messageNum;
+
+        String expected = CommandInterpreter.ERR_NEGMSGNUM + CRLF;
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0)).uidl(Mockito.anyInt());
+        Assert.assertEquals(expected, response);
     }
 
     //////////////////////////////////////////////////////////////////////////
