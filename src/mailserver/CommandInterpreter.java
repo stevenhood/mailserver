@@ -21,6 +21,8 @@ public class CommandInterpreter {
     /** Error message indicating a command issued in the UPDATE state. */
     public static final String ERR_CMD_UPDATE =
             "-ERR cannot issue commands in UPDATE state";
+    public static final String ERR_ARGS_NON_INT =
+            "-ERR one or more arguments must be integer values";
 
     /** Maintains the current server {@link State}. */
     private State mState;
@@ -90,7 +92,7 @@ public class CommandInterpreter {
 
         } catch (NumberFormatException e) {
             Log.e(TAG, "handleInput: Arguments of invalid type, must be int", e);
-            response = "-ERR one or more arguments must be integer values";
+            response = ERR_ARGS_NON_INT;
         }
 
         // Include the request at the end of the response where the response
