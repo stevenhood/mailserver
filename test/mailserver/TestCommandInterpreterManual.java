@@ -56,7 +56,7 @@ public class TestCommandInterpreterManual {
             new BufferedReader(new InputStreamReader(System.in));
 
     /**
-     * @param args command line arguments
+     * @param args command line arguments (ignored)
      */
     public static void main(String[] args) {
 

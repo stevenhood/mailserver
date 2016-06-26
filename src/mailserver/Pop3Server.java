@@ -81,12 +81,29 @@ import java.sql.Statement;
  */
 public class Pop3Server {
 
+    /**
+     * Tag used for logging.
+     */
     private static final String TAG = Pop3Server.class.getSimpleName();
 
+    /** The default port to bind the server to. */
     public static final int DEFAULT_PORT = 110;
 
+    /** The default response timeout before closing the connection. */
     public static final int DEFAULT_TIMEOUT = 600000;
 
+    /** The port the server will be bound to. */
+    private final int mPort;
+
+    /** The response timeout before closing the connection. */
+    private final int mTimeout;
+
+    /** Whether the server is running or not. */
+    private boolean mRunning;
+
+    /**
+     * @param args optional command line arguments (port, timeout)
+     */
     public static void main(String[] args) {
         int port;
         int timeout;
@@ -117,27 +134,68 @@ public class Pop3Server {
             return;
         }
 
+        Pop3Server server = new Pop3Server(port, timeout);
+        server.start();
+
         System.out.printf("Running on port %d\n", port);
         System.out.printf("Timeout in %dms\n\n", timeout);
-
-        ServerSocket serverSocket;
-        boolean running = true;
-
-        try {
-            serverSocket = new ServerSocket(port);
-
-            while (running) {
-                Socket clientSocket = serverSocket.accept();
-                new Thread(new ClientConnection(clientSocket, timeout)).start();
-            }
-
-            serverSocket.close();
-
-        } catch (IOException e) {
-            Log.e(TAG, "main: Failed to accept new connection", e);
-        }
     }
 
+    public Pop3Server(int port, int timeout) {
+        mPort = port;
+        mTimeout = timeout;
+    }
+
+    /**
+     * Start the server. Can only be called again after stop() has been called.
+     */
+    public void start() {
+
+        if (mRunning) {
+            return;
+        }
+
+        new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                ServerSocket serverSocket;
+                mRunning = true;
+
+                try {
+                    serverSocket = new ServerSocket(mPort);
+
+                    while (mRunning) {
+                        Socket clientSocket = serverSocket.accept();
+                        new Thread(
+                                new ClientConnection(clientSocket, mTimeout)
+                        ).start();
+                    }
+
+                    serverSocket.close();
+
+                } catch (IOException e) {
+                    Log.e(TAG, "run: Failed to accept new connection", e);
+                }
+            }
+
+        }).start();
+
+    }
+
+    /**
+     * Stop the server.
+     */
+    public void stop() {
+        mRunning = false;
+    }
+
+    /**
+     * Test the connection to the database is functioning correctly.
+     *
+     * @return <code>true</code> if the connection is working.
+     * Otherwise <code>false</code>.
+     */
     private static boolean testConnection() {
         boolean success = true;
 

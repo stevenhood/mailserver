@@ -109,6 +109,6 @@ public class ClientConnection implements Runnable {
      */
     private void printMessage(String message, String type) {
         System.out.printf("%d %s: %s\n", mId, type,
-                message.replace("\n", "").replace("\r", ""));
+                message.replace("\n", " ").replace("\r", " "));
     }
 }

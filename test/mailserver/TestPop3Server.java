@@ -15,7 +15,7 @@ public class TestPop3Server {
     private static BufferedWriter[] sWriters;
 
     /**
-     * @param args command line arguments
+     * @param args optional command line argument (port)
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
