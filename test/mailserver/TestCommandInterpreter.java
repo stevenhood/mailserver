@@ -493,6 +493,8 @@ public class TestCommandInterpreter {
         Mockito.doReturn(OK).when(mDatabase).rset();
 
         String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(1)).rset();
         Assert.assertEquals(concat(OK, request), response);
     }
 
@@ -501,11 +503,11 @@ public class TestCommandInterpreter {
         executeValidPassword();
 
         String request = "RSET a b";
-        Mockito.doReturn(OK).when(mDatabase).rset();
 
         String expected = concat(CommandInterpreter.ERR_EXCESSIVEARGS, request);
         String response = mCi.handleInput(request);
 
+        Mockito.verify(mDatabase, Mockito.times(0)).rset();
         Assert.assertEquals(expected, response);
     }
 
@@ -521,6 +523,8 @@ public class TestCommandInterpreter {
         Mockito.doReturn(OK).when(mDatabase).stat();
 
         String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(1)).stat();
         Assert.assertEquals(OK + CRLF, response);
     }
 
@@ -529,11 +533,11 @@ public class TestCommandInterpreter {
         executeValidPassword();
 
         String request = "STAT def";
-        Mockito.doReturn(OK).when(mDatabase).rset();
 
-        String expected = concat(CommandInterpreter.ERR_EXCESSIVEARGS, request);
+        String expected = CommandInterpreter.ERR_EXCESSIVEARGS + CRLF;
         String response = mCi.handleInput(request);
 
+        Mockito.verify(mDatabase, Mockito.times(0)).stat();
         Assert.assertEquals(expected, response);
     }
 
@@ -576,14 +580,52 @@ public class TestCommandInterpreter {
     /////////////////////////////////////////////////////////////////////////
 
     @Test
-    public void testQUIT_Valid() {
+    public void testQuitValidInAuthorizationState() {
         String response = mCi.handleInput("QUIT");
+
+        Mockito.verify(mDatabase, Mockito.times(1)).timeout();
         Assert.assertTrue(response.contains(OK));
     }
 
     @Test
-    public void testQUIT_ExcessiveArgs() {
-        String response = mCi.handleInput("QUIT jkl");
-        Assert.assertTrue(response.contains(ERR));
+    public void testQuitValidInTransactionState() {
+        // Put in TRANSACTION state
+        executeValidPassword();
+        Mockito.doReturn(OK).when(mDatabase).quit();
+        String request = "QUIT";
+
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(1)).quit();
+        Assert.assertEquals(concat(OK, request), response);
+    }
+
+    @Test
+    public void testQuitInvalidInAnyOtherState() {
+        String request = "QUIT";
+
+        // Put in TRANSACTION state
+        executeValidPassword();
+        // Put in UPDATE state
+        mCi.handleInput(request);
+
+        String expected = concat(CommandInterpreter.ERR_CMD_UPDATE, request);
+        String response = mCi.handleInput(request);
+
+        Assert.assertEquals(expected, response);
+    }
+
+    @Test
+    public void testQuitExcessiveArgsReturnsError() {
+        executeValidPassword();
+
+        String request = "QUIT jkl";
+
+        String expected = concat(CommandInterpreter.ERR_EXCESSIVEARGS, request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0)).timeout();
+        Mockito.verify(mDatabase, Mockito.times(0)).quit();
+        Assert.assertEquals(expected, response);
     }
 }

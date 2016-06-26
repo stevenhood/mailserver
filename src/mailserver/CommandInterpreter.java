@@ -464,6 +464,7 @@ public class CommandInterpreter {
             return mDatabase.quit();
 
         } else {
+            // Should be prevented earlier in handleInput
             Log.e(TAG, "quit: Invalid state");
             return ERR_CMD_UPDATE;
         }

@@ -100,7 +100,7 @@ public interface IDatabase {
      * TRANSACTION state. All messages marked for deletion are deleted and the
      * session is ended.
      *
-     * @return a response based on the success of any message deletions.s
+     * @return a response based on the success of any message deletions.
      */
     String quit();
 
