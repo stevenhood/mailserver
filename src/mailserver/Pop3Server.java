@@ -88,7 +88,8 @@ public class Pop3Server {
     public static final int DEFAULT_TIMEOUT = 600000;
 
     public static void main(String[] args) {
-        int port, timeout;
+        int port;
+        int timeout;
 
         if (args.length < 2) {
             // Default values if unspecified, 10 minute inactivity timeout

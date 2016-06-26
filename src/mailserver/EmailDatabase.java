@@ -390,23 +390,25 @@ public class EmailDatabase implements IDatabase {
         int totalOctets = 0;
 
         String query = "SELECT iMailID, LENGTH(txMailContent) AS octets"
-                + " FROM m_Mail WHERE iMaildropID = ? ";
+                + " FROM m_Mail WHERE (iMaildropID = ?) ";
 
-        if (messageNumber > 0) {
+        boolean specificMessage = messageNumber > 0;
+
+        if (specificMessage) {
             // Find size of specific message instead of total size
-            query += " AND iMailID = ? ";
+            query += " AND (iMailID = ?) ";
         }
 
         try {
             PreparedStatement statement = mConnection.prepareStatement(query);
             statement.setInt(1, mMaildropID);
 
-            if (messageNumber > 0) {
+            if (specificMessage) {
                 // Find size of specific message instead of total size
                 statement.setInt(2, mMailIDs.get(messageNumber));
             }
 
-            ResultSet rs = statement.executeQuery(query);
+            ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 int i = getMessageNumber(rs.getInt("iMailID"));
                 if (!mMarkedDeleted[i]) {
