@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 public class TestCommandInterpreter {
@@ -376,47 +377,109 @@ public class TestCommandInterpreter {
     /////////////////////////////////////////////////////////////////////////
 
     @Test
-    public void testTOP_ValidArgs() {
-        String response = mCi.handleInput("TOP 1 2");
-        // Valid request but still returns an error because there are no
-        // messages in the dummy database
-        Assert.assertTrue(response.contains(ERR));
+    public void testTopValidArgs() {
+        executeValidPassword();
+
+        int messageNum = 38;
+        int lineCount = 50;
+        String request = "TOP " + messageNum + " " + lineCount;
+        Mockito.doReturn(OK).when(mDatabase).getMessage(messageNum, lineCount);
+
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(1))
+                .getMessage(messageNum, lineCount);
+        Assert.assertEquals(concat(OK, request), response);
     }
 
     @Test
-    public void testTOP_NoArgs() {
-        String response = mCi.handleInput("TOP");
-        Assert.assertTrue(response.contains(ERR));
+    public void testTopMissingArgsReturnsError() {
+        executeValidPassword();
+
+        String request = "TOP";
+        Mockito.doReturn(OK).when(mDatabase)
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+
+        String expected = concat(CommandInterpreter.ERR_MISSINGARGS, request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0))
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+        Assert.assertEquals(expected, response);
     }
 
     @Test
-    public void testTOP_ExcessiveArgs() {
-        String response = mCi.handleInput("TOP 3 4 5");
-        Assert.assertTrue(response.contains(ERR));
+    public void testTopExcessiveArgsReturnsError() {
+        executeValidPassword();
+
+        String request = "TOP 3 4 5";
+        Mockito.doReturn(OK).when(mDatabase)
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+
+        String expected = concat(CommandInterpreter.ERR_EXCESSIVEARGS, request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0))
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+        Assert.assertEquals(expected, response);
     }
 
     @Test
-    public void testTOP_NonIntArg1() {
-        String response = mCi.handleInput("TOP x 2");
-        Assert.assertTrue(response.contains(ERR));
+    public void testTopNonIntMessagenumReturnsError() {
+        executeValidPassword();
+        String request = "TOP x 2";
+
+        String expected = concat(CommandInterpreter.ERR_ARGS_NON_INT, request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0))
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+        Assert.assertEquals(expected, response);
     }
 
     @Test
-    public void testTOP_NonIntArg2() {
-        String response = mCi.handleInput("TOP 1 x");
-        Assert.assertTrue(response.contains(ERR));
+    public void testTopNonIntLinecountArgReturnsError() {
+        executeValidPassword();
+        String request = "TOP 1 x";
+
+        String expected = concat(CommandInterpreter.ERR_ARGS_NON_INT, request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0))
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+        Assert.assertEquals(expected, response);
     }
 
     @Test
-    public void testTOP_MessagenumLessThanOne() {
-        String response = mCi.handleInput("TOP 0 2");
-        Assert.assertTrue(response.contains(ERR));
+    public void testTopMessagenumLessThanOneReturnsError() {
+        executeValidPassword();
+
+        int messageNum = -3;
+        int lineCount = 50;
+        String request = "TOP " + messageNum + " " + lineCount;
+
+        String expected = concat(CommandInterpreter.ERR_NEGMSGNUM, request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0))
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+        Assert.assertEquals(expected, response);
     }
 
     @Test
-    public void testTOP_LinecountLessThanZero() {
-        String response = mCi.handleInput("TOP 1 -1");
-        Assert.assertTrue(response.contains(ERR));
+    public void testTopLinecountLessThanZeroReturnsError() {
+        executeValidPassword();
+
+        int messageNum = 20;
+        int lineCount = -64;
+        String request = "TOP " + messageNum + " " + lineCount;
+
+        String expected = concat(CommandInterpreter.ERR_NEG_LINE_COUNT, request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0))
+                .getMessage(Mockito.anyInt(), Mockito.anyInt());
+        Assert.assertEquals(expected, response);
     }
 
     //////////////////////////////////////////////////////////////////////////

@@ -23,6 +23,7 @@ public class CommandInterpreter {
             "-ERR cannot issue commands in UPDATE state";
     public static final String ERR_ARGS_NON_INT =
             "-ERR one or more arguments must be integer values";
+    public static final String ERR_NEG_LINE_COUNT = "-ERR negative line count";
 
     /** Maintains the current server {@link State}. */
     private State mState;
@@ -376,7 +377,7 @@ public class CommandInterpreter {
             int lineCount = Integer.parseInt(arguments[2]);
 
             if (lineCount < 0) {
-                return "-ERR negative line count";
+                return ERR_NEG_LINE_COUNT;
             }
 
             return mDatabase.getMessage(messageNumber, lineCount);
