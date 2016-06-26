@@ -10,25 +10,29 @@ import java.net.Socket;
 
 public class TestPop3Server {
 
-    private static Socket[] sockets;
-    private static BufferedReader[] readers;
-    private static BufferedWriter[] writers;
+    private static Socket[] sSockets;
+    private static BufferedReader[] sReaders;
+    private static BufferedWriter[] sWriters;
 
     /**
-     *
-     * @param args
+     * @param args command line arguments
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
         int numRequests = 12;
         String[][] requests = {
-                {"USER alex", "PASS hello123", "DELE 2", "LIST", "LIST 3", "RETR 1", "TOP 2 10", "RSET", "STAT", "UIDL", "UIDL 3", "QUIT"},
-                {"USER bob", "PASS qwerty", "DELE 3", "LIST", "LIST 1", "RETR 3", "TOP 3 0", "RSET", "STAT", "UIDL", "UIDL 2", "QUIT"},
-                {"USER claire", "PASS qazwsx", "DELE 1", "LIST", "LIST 2", "RETR 4", "TOP 1 100", "RSET", "STAT", "UIDL", "UIDL 2", "QUIT"}
+                {"USER alex", "PASS hello123", "DELE 2", "LIST",
+                        "LIST 3", "RETR 1", "TOP 2 10", "RSET",
+                        "STAT", "UIDL", "UIDL 3", "QUIT"},
+                {"USER bob", "PASS qwerty", "DELE 3", "LIST",
+                        "LIST 1", "RETR 3", "TOP 3 0", "RSET",
+                        "STAT", "UIDL", "UIDL 2", "QUIT"},
+                {"USER claire", "PASS qazwsx", "DELE 1", "LIST",
+                        "LIST 2", "RETR 4", "TOP 1 100", "RSET",
+                        "STAT", "UIDL", "UIDL 2", "QUIT"}
         };
 
-        // Default port
-        int port = 110;
+        int port = Pop3Server.DEFAULT_PORT;
         int numSockets = 3;
 
         if (args.length == 1) {
@@ -44,77 +48,86 @@ public class TestPop3Server {
             return;
         }
 
-        setup(numSockets, port);
+        TestPop3Server tester = new TestPop3Server();
+
+        tester.setup(numSockets, port);
 
         // Read in server greetings
-        for (BufferedReader br : readers) {
+        for (BufferedReader br : sReaders) {
             System.out.println(br.readLine());
         }
 
         for (int i = 0; i < requests.length; i++) {
             for (int j = 0; j < numRequests; j++) {
-                String request = requests[i][j] + "\r\n";
                 // Execute that request for the socket and print the response
+                String request = requests[i][j] + "\r\n";
+                String response = tester.issueRequest(request, sReaders[i],
+                        sWriters[i]);
+
                 System.out.print("socket   " + i + ": " + request);
-                System.out.println("response " + i + ": " +
-                        issueRequest(request, readers[i], writers[i]));
+                System.out.println("response " + i + ": " + response);
             }
         }
 
-        for (Socket s : sockets) {
+        for (Socket s : sSockets) {
             s.close();
         }
     }
 
     /**
+     * Setup connections to a mailserver instance.
      *
-     * @param numSockets
-     * @param port
+     * @param numSockets number of sockets to create
+     * @param port       the port number on which the mailserver instance is running
      * @throws IOException
      */
-    private static void setup(int numSockets, int port) throws IOException {
-        sockets = new Socket[numSockets];
+    private void setup(int numSockets, int port) throws IOException {
+        sSockets = new Socket[numSockets];
         for (int i = 0; i < numSockets; i++) {
-            sockets[i] = new Socket(InetAddress.getLocalHost(), port);
+            sSockets[i] = new Socket(InetAddress.getLocalHost(), port);
         }
 
-        readers = new BufferedReader[numSockets];
+        sReaders = new BufferedReader[numSockets];
         for (int i = 0; i < numSockets; i++) {
-            readers[i] = new BufferedReader(
-                    new InputStreamReader(sockets[i].getInputStream())
+            sReaders[i] = new BufferedReader(
+                    new InputStreamReader(sSockets[i].getInputStream())
             );
         }
 
-        writers = new BufferedWriter[numSockets];
+        sWriters = new BufferedWriter[numSockets];
         for (int i = 0; i < numSockets; i++) {
-            writers[i] = new BufferedWriter(
-                    new OutputStreamWriter(sockets[i].getOutputStream())
+            sWriters[i] = new BufferedWriter(
+                    new OutputStreamWriter(sSockets[i].getOutputStream())
             );
         }
     }
 
     /**
+     * Processes the request from a client and returns the reponse from the
+     * server.
      *
-     * @param request
-     * @param br
-     * @param bw
-     * @return
+     * @param request the request from the client to send to the server
+     * @param reader  the input stream to send data to the client
+     * @param writer  the output stream to send data to the server
+     * @return the response from the server
      * @throws IOException
      */
-    private static String issueRequest(String request, BufferedReader br,
-                                      BufferedWriter bw)
+    private String issueRequest(String request, BufferedReader reader,
+                                BufferedWriter writer)
             throws IOException {
 
-        bw.write(request);
-        bw.flush();
+        // Send the request to the server
+        writer.write(request);
+        writer.flush();
 
-        StringBuilder builder = new StringBuilder();
+        // Get the server's response
+        StringBuilder response = new StringBuilder();
         String buf;
 
-        while ((buf = br.readLine()) != null) {
-            builder.append(buf);
+        while (null != (buf = reader.readLine())) {
+            response.append(buf);
         }
 
-        return builder.toString();
+        return response.toString();
     }
 }

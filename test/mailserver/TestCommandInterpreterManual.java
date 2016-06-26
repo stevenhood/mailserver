@@ -52,16 +52,17 @@ import java.io.IOException;
  */
 public class TestCommandInterpreterManual {
 
-    private static final BufferedReader br = new BufferedReader(new InputStreamReader(
-            System.in));
+    private static final BufferedReader br =
+            new BufferedReader(new InputStreamReader(System.in));
 
     /**
-     * @param args
+     * @param args command line arguments
      */
     public static void main(String[] args) {
 
-        CommandInterpreter ci = new CommandInterpreter();
-        String command, response;
+        CommandInterpreter ci = new CommandInterpreter(new EmailDatabase());
+        String command;
+        String response;
         boolean running = true;
 
         while (running) {
@@ -70,8 +71,8 @@ public class TestCommandInterpreterManual {
             System.out.println(response);
 
             // TODO Case insensitive comparison
-            if (response.contains("+OK")
-                    && (response.contains("QUIT") || response.contains("quit"))) {
+            if ("+OK".contains(response) && ("QUIT".contains(response) ||
+                    "quit".contains(response))) {
                 running = false;
             }
         }

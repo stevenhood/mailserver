@@ -19,6 +19,8 @@ public class EmailDatabase implements IDatabase {
 
     /** Tag used for logger / debugging. */
     private static final String TAG = IDatabase.class.getSimpleName();
+    /** Carriage Return + Line Feed */
+    private static final String CRLF = "\r\n";
 
     /** The connection to the SQL database. */
     private Connection mConnection;
@@ -88,6 +90,7 @@ public class EmailDatabase implements IDatabase {
 
         } catch (SQLException e) {
             Log.e(TAG, "user: Failed to execute USER command", e);
+            return "-ERR USER command failed";
         }
 
         return "-ERR mailbox " + uname + " does not exist";
@@ -160,12 +163,12 @@ public class EmailDatabase implements IDatabase {
             // Return total number and size of all unmarked messages
             StringBuilder response = new StringBuilder();
             response.append("+OK ").append(mNumUndeleted).append(" messages (")
-                    .append(getOctets(-1)).append(" octets)\r\n");
+                    .append(getOctets(-1)).append(" octets)").append(CRLF);
 
             for (int i = 1; i < mMailIDs.size(); i++) {
                 if (!mMarkedDeleted[i]) {
                     response.append(i).append(" ").append(getOctets(i))
-                            .append("\r\n");
+                            .append(CRLF);
                 }
             }
             response.append(".");
@@ -208,7 +211,7 @@ public class EmailDatabase implements IDatabase {
             // unsplit message that is not to be sent
             String[] lines = header_body[1].split("\n", lineCount + 1);
 
-            StringBuilder response = new StringBuilder("+OK\r\n");
+            StringBuilder response = new StringBuilder("+OK").append(CRLF);
             // Concatenate the header and partial message body
             response.append(header_body[0]).append("\n\n");
             for (int i = 0; i < lines.length - 1; i++) {
@@ -216,7 +219,7 @@ public class EmailDatabase implements IDatabase {
                     // Byte-stuff line by prepending with termination octet
                     response.append(".");
                 }
-                response.append(lines[i]).append("\r\n");
+                response.append(lines[i]).append(CRLF);
             }
             // Append the termination octet
             response.append(".");
@@ -247,7 +250,7 @@ public class EmailDatabase implements IDatabase {
         if (messageNumber < 1) {
             // Return UIDL for all unmarked messages
             try {
-                StringBuilder response = new StringBuilder("+OK\r\n");
+                StringBuilder response = new StringBuilder("+OK").append(CRLF);
                 ResultSet rs = mStatement.executeQuery(
                         "SELECT iMailID, vchUIDL FROM m_Mail WHERE iMaildropID"
                                 + " = " + mMaildropID);
@@ -255,7 +258,7 @@ public class EmailDatabase implements IDatabase {
                     int i = getMessageNumber(rs.getInt("iMailID"));
                     if (!mMarkedDeleted[i]) {
                         response.append(i).append(" ")
-                                .append(rs.getString("vchUIDL")).append("\r\n");
+                                .append(rs.getString("vchUIDL")).append(CRLF);
                     }
                 }
                 response.append(".");

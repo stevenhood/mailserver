@@ -42,7 +42,7 @@ public class ClientConnection implements Runnable {
         mClientSocket = clientSocket;
         clientSocket.setSoTimeout(timeout);
 
-        mCommandInterpreter = new CommandInterpreter();
+        mCommandInterpreter = new CommandInterpreter(new EmailDatabase());
         mReader = new BufferedReader(new InputStreamReader(
                 clientSocket.getInputStream()));
         mWriter = new BufferedWriter(new OutputStreamWriter(

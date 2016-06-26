@@ -2,34 +2,143 @@ package mailserver;
 
 import static org.junit.Assert.*;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
 import org.junit.After;
+import org.mockito.Mockito;
 
 public class TestCommandInterpreter {
 
-    private static final String OK = "+OK";
+    private static final String OK = CommandInterpreter.OK;
     private static final String ERR = "-ERR";
 
-    private CommandInterpreter ci;
-    private String response;
+    /** Mocked IDatabase */
+    private IDatabase mDatabase;
+
+    /** Instance under test */
+    private CommandInterpreter mCi;
 
     @Before
     public void setUp() {
-        ci = new CommandInterpreter();
-        ci.handleInput("USER test");
-        ci.handleInput("PASS password");
+
+        mDatabase = Mockito.mock(IDatabase.class);
+
+        mCi = new CommandInterpreter(mDatabase);
+        //mCi.handleInput("USER test");
+        //mCi.handleInput("PASS password");
     }
 
     @After
     public void tearDown() {
-        System.out.print(response);
+        Mockito.validateMockitoUsage();
+    }
+
+    private String concat(String code, String request) {
+        return code + " " + request + "\r\n";
+    }
+
+    @Test
+    public void testUserValid() {
+        String uname = "test";
+        String request = "USER " + uname;
+        Mockito.doReturn(OK).when(mDatabase).user(uname);
+
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(1)).user(uname);
+        Assert.assertEquals(concat(OK, request), response);
+    }
+
+    @Test
+    public void testUserCanOnlySuccessfullyExecuteOnce() {
+        String uname = "test";
+        String request = "USER " + uname;
+        Mockito.doReturn(OK).when(mDatabase).user(uname);
+
+        mCi.handleInput(request);
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(1)).user(uname);
+        Assert.assertTrue(response.contains(ERR));
+    }
+
+    @Test
+    public void testUserMissingArgsReturnsError() {
+        String request = "USER";
+
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0)).user(Mockito.anyString());
+        String expected = concat(CommandInterpreter.ERR_MISSINGARGS, request);
+        Assert.assertEquals(expected, response);
+    }
+
+    @Test
+    public void testUserExcessiveArgsReturnsError() {
+        String request = "USER a b";
+
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0)).user(Mockito.anyString());
+        String expected = concat(CommandInterpreter.ERR_EXCESSIVEARGS, request);
+        Assert.assertEquals(expected, response);
+    }
+
+    private void executeValidUser() {
+        String uname = "test";
+        String request = "USER " + uname;
+        Mockito.doReturn(OK).when(mDatabase).user(uname);
+        mCi.handleInput(request);
+    }
+
+    private void executeValidPassword(String password) {
+        executeValidUser();
+        Mockito.doReturn(OK).when(mDatabase).pass(password);
+        String request = "PASS " + password;
+
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(1)).pass(password);
+        Assert.assertEquals(concat(OK, request), response);
+    }
+
+    @Test
+    public void testPassValid() {
+        executeValidPassword("password");
+    }
+
+    @Test
+    public void testPassAsMultipleArgsValid() {
+        executeValidPassword("pas sw ord");
+    }
+
+    @Test
+    public void testPassFailsWithoutSuccessfulUser() {
+        String password = "password";
+        String request = "PASS " + password;
+
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0)).pass(password);
+        Assert.assertTrue(response.contains(ERR));
+    }
+
+    @Test
+    public void testPassFailsWithMissingArgs() {
+        executeValidUser();
+        String request = "PASS";
+
+        String response = mCi.handleInput(request);
+
+        Mockito.verify(mDatabase, Mockito.times(0)).pass(Mockito.anyString());
+        Assert.assertTrue(response.contains(ERR));
     }
 
     // DELE
     @Test
     public void testDELE_Valid() {
-        response = ci.handleInput("DELE 1");
+        String response = mCi.handleInput("DELE 1");
         // Valid request but still returns an error because there are no
         // messages in the dummy database
         assertTrue(response.contains(ERR));
@@ -37,32 +146,32 @@ public class TestCommandInterpreter {
 
     @Test
     public void testDELE_NoArgs() {
-        response = ci.handleInput("DELE");
+        String response = mCi.handleInput("DELE");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testDELE_ExcessiveArgs() {
-        response = ci.handleInput("DELE 1 2");
+        String response = mCi.handleInput("DELE 1 2");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testDELE_NonInt() {
-        response = ci.handleInput("DELE abc");
+        String response = mCi.handleInput("DELE abc");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testDELE_MessagenumLessThanOne() {
-        response = ci.handleInput("DELE 0");
+        String response = mCi.handleInput("DELE 0");
         assertTrue(response.contains(ERR));
     }
 
     // LIST
     @Test
     public void testLIST_ValidArg() {
-        response = ci.handleInput("LIST 1");
+        String response = mCi.handleInput("LIST 1");
         // Valid request but still returns an error because there are no
         // messages in the dummy database
         assertTrue(response.contains(ERR));
@@ -70,45 +179,45 @@ public class TestCommandInterpreter {
 
     @Test
     public void testLIST_ValidNoArg() {
-        response = ci.handleInput("LIST");
+        String response = mCi.handleInput("LIST");
         assertTrue(response.contains(OK));
     }
 
     @Test
     public void testLIST_ExcessiveArgs() {
-        response = ci.handleInput("LIST 1 2");
+        String response = mCi.handleInput("LIST 1 2");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testLIST_NonInt() {
-        response = ci.handleInput("LIST xyz");
+        String response = mCi.handleInput("LIST xyz");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testLIST_MessagenumLessThanOne() {
-        response = ci.handleInput("LIST 0");
+        String response = mCi.handleInput("LIST 0");
         assertTrue(response.contains(ERR));
     }
 
     // NOOP
     @Test
     public void testNOOP_Valid() {
-        response = ci.handleInput("NOOP");
+        String response = mCi.handleInput("NOOP");
         assertTrue(response.contains(OK));
     }
 
     @Test
     public void testNOOP_ExcessiveArgs() {
-        response = ci.handleInput("NOOP x");
+        String response = mCi.handleInput("NOOP x");
         assertTrue(response.contains(ERR));
     }
 
     // RETR
     @Test
     public void testRETR_Valid() {
-        response = ci.handleInput("RETR 1");
+        String response = mCi.handleInput("RETR 1");
         // Valid request but still returns an error because there are no
         // messages in the dummy database
         assertTrue(response.contains(ERR));
@@ -116,32 +225,32 @@ public class TestCommandInterpreter {
 
     @Test
     public void testRETR_NoArgs() {
-        response = ci.handleInput("RETR");
+        String response = mCi.handleInput("RETR");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testRETR_ExcessiveArgs() {
-        response = ci.handleInput("RETR 1 2");
+        String response = mCi.handleInput("RETR 1 2");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testRETR_NonInt() {
-        response = ci.handleInput("RETR efg");
+        String response = mCi.handleInput("RETR efg");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testRETR_MessagenumLessThanOne() {
-        response = ci.handleInput("RETR 0");
+        String response = mCi.handleInput("RETR 0");
         assertTrue(response.contains(ERR));
     }
 
     // TOP
     @Test
     public void testTOP_ValidArgs() {
-        response = ci.handleInput("TOP 1 2");
+        String response = mCi.handleInput("TOP 1 2");
         // Valid request but still returns an error because there are no
         // messages in the dummy database
         assertTrue(response.contains(ERR));
@@ -149,107 +258,107 @@ public class TestCommandInterpreter {
 
     @Test
     public void testTOP_NoArgs() {
-        response = ci.handleInput("TOP");
+        String response = mCi.handleInput("TOP");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testTOP_ExcessiveArgs() {
-        response = ci.handleInput("TOP 3 4 5");
+        String response = mCi.handleInput("TOP 3 4 5");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testTOP_NonIntArg1() {
-        response = ci.handleInput("TOP x 2");
+        String response = mCi.handleInput("TOP x 2");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testTOP_NonIntArg2() {
-        response = ci.handleInput("TOP 1 x");
+        String response = mCi.handleInput("TOP 1 x");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testTOP_MessagenumLessThanOne() {
-        response = ci.handleInput("TOP 0 2");
+        String response = mCi.handleInput("TOP 0 2");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testTOP_LinecountLessThanZero() {
-        response = ci.handleInput("TOP 1 -1");
+        String response = mCi.handleInput("TOP 1 -1");
         assertTrue(response.contains(ERR));
     }
 
     // RSET
     @Test
     public void testRSET_Valid() {
-        response = ci.handleInput("RSET");
+        String response = mCi.handleInput("RSET");
         assertTrue(response.contains(OK));
     }
 
     @Test
     public void testRSET_ExcessiveArgs() {
-        response = ci.handleInput("RSET abc");
+        String response = mCi.handleInput("RSET abc");
         assertTrue(response.contains(ERR));
     }
 
     // STAT
     @Test
     public void testSTAT_Valid() {
-        response = ci.handleInput("STAT");
+        String response = mCi.handleInput("STAT");
         assertTrue(response.contains(OK));
     }
 
     @Test
     public void testSTAT_ExcessiveArgs() {
-        response = ci.handleInput("STAT def");
+        String response = mCi.handleInput("STAT def");
         assertTrue(response.contains(ERR));
     }
 
     // UIDL
     @Test
     public void testUIDL_ValidArg() {
-        response = ci.handleInput("UIDL 1");
+        String response = mCi.handleInput("UIDL 1");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testUIDL_ValidNoArg() {
-        response = ci.handleInput("UIDL");
+        String response = mCi.handleInput("UIDL");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testUIDL_ExcessiveArgs() {
-        response = ci.handleInput("UIDL 3 4");
+        String response = mCi.handleInput("UIDL 3 4");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testUIDL_NonInt() {
-        response = ci.handleInput("UIDL ghi");
+        String response = mCi.handleInput("UIDL ghi");
         assertTrue(response.contains(ERR));
     }
 
     @Test
     public void testUIDL_MessagenumLessThanOne() {
-        response = ci.handleInput("UIDL 0");
+        String response = mCi.handleInput("UIDL 0");
         assertTrue(response.contains(ERR));
     }
 
     // QUIT
     @Test
     public void testQUIT_Valid() {
-        response = ci.handleInput("QUIT");
+        String response = mCi.handleInput("QUIT");
         assertTrue(response.contains(OK));
     }
 
     @Test
     public void testQUIT_ExcessiveArgs() {
-        response = ci.handleInput("QUIT jkl");
+        String response = mCi.handleInput("QUIT jkl");
         assertTrue(response.contains(ERR));
     }
 }

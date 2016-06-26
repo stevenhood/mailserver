@@ -8,18 +8,18 @@ public class CommandInterpreter {
     private static final String TAG = CommandInterpreter.class.getSimpleName();
 
     /** The OK response. */
-    private static final String OK = "+OK";
+    public static final String OK = "+OK";
     /** Error message indicating missing command arguments. */
-    private static final String ERR_MISSINGARGS =
+    public static final String ERR_MISSINGARGS =
             "-ERR required arguments missing";
     /** Error message indicating too many command arguments. */
-    private static final String ERR_EXCESSIVEARGS =
+    public static final String ERR_EXCESSIVEARGS =
             "-ERR excessive number of arguments";
     /** Error message indicating a negative message number. */
-    private static final String ERR_NEGMSGNUM =
+    public static final String ERR_NEGMSGNUM =
             "-ERR message number must be greater than zero";
     /** Error message indicating a command issued in the UPDATE state. */
-    private static final String ERR_CMD_UPDATE =
+    public static final String ERR_CMD_UPDATE =
             "-ERR cannot issue commands in UPDATE state";
 
     /** Maintains the current server {@link State}. */
@@ -38,18 +38,21 @@ public class CommandInterpreter {
     private boolean mIsQuit;
 
     /**
-     * An implementation of the IDatabase interface which contains all of the
-     * server responses to send to the client.
+     * An implementation of the IDatabase interface which allows the commands to
+     * be executed on the backend and return responses to the client.
      */
     private IDatabase mDatabase;
 
     /**
      * Construct a CommandInterpreter in the <code>AUTHORIZATION</code> state.
      * See {@link State}.
+     *
+     * @param database the IDatabase implementation for executing commands on
+     *                 the backend
      */
-    public CommandInterpreter() {
+    public CommandInterpreter(IDatabase database) {
         mState = State.AUTHORIZATION;
-        mDatabase = new EmailDatabase();
+        mDatabase = database;
         mIsUserIssued = false;
         mIsQuit = false;
     }

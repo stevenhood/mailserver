@@ -83,13 +83,17 @@ public class Pop3Server {
 
     private static final String TAG = Pop3Server.class.getSimpleName();
 
+    public static final int DEFAULT_PORT = 110;
+
+    public static final int DEFAULT_TIMEOUT = 600000;
+
     public static void main(String[] args) {
         int port, timeout;
 
         if (args.length < 2) {
             // Default values if unspecified, 10 minute inactivity timeout
-            port = 110;
-            timeout = 600000;
+            port = DEFAULT_PORT;
+            timeout = DEFAULT_TIMEOUT;
 
         } else {
             try {
