@@ -2,6 +2,7 @@ package mailserver;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -24,8 +25,6 @@ public class EmailDatabase implements IDatabase {
 
     /** The connection to the SQL database. */
     private Connection mConnection;
-    /** Used for executing SQL statements and returning the results. */
-    private Statement mStatement;
     /** Whether the user is logged in or not. */
     private boolean mLoggedIn;
     /** The username for the user logged in / attempting to log in. */
@@ -56,9 +55,11 @@ public class EmailDatabase implements IDatabase {
     public EmailDatabase() {
         try {
             Class.forName("com.mysql.jdbc.Driver").newInstance();
-            mConnection = DriverManager.getConnection(Login.HOST,
-                    Login.USERNAME, Login.PASSWORD);
-            mStatement = mConnection.createStatement();
+            mConnection = DriverManager.getConnection(
+                    Login.HOST,
+                    Login.USERNAME,
+                    Login.PASSWORD
+            );
 
         } catch (SQLException | InstantiationException
                 | IllegalAccessException | ClassNotFoundException e) {
@@ -71,7 +72,8 @@ public class EmailDatabase implements IDatabase {
     @Override
     public String user(String uname) {
         try {
-            ResultSet rs = mStatement.executeQuery("SELECT * FROM m_Maildrop");
+            Statement statement = mConnection.createStatement();
+            ResultSet rs = statement.executeQuery("SELECT * FROM m_Maildrop");
 
             while (rs.next()) {
                 if (rs.getString("vchUsername").equals(uname)) {
@@ -88,6 +90,9 @@ public class EmailDatabase implements IDatabase {
                 }
             }
 
+            rs.close();
+            statement.close();
+
         } catch (SQLException e) {
             Log.e(TAG, "user: Failed to execute USER command", e);
             return "-ERR USER command failed";
@@ -100,10 +105,13 @@ public class EmailDatabase implements IDatabase {
     public String pass(String pword) {
         if (mPassword.equals(pword)) {
             try {
-                lockMaildrop();
-                ResultSet rs = mStatement.executeQuery(
-                        "SELECT iMailID FROM m_Mail WHERE iMaildropID = "
-                                + mMaildropID);
+                setMaildropLocked(true);
+
+                PreparedStatement statement = mConnection.prepareStatement(
+                        "SELECT iMailID FROM m_Mail WHERE iMaildropID = ? "
+                );
+                statement.setInt(1, mMaildropID);
+                ResultSet rs = statement.executeQuery();
 
                 // No message at position zero, assign each email a number from
                 // 1 to n
@@ -113,24 +121,28 @@ public class EmailDatabase implements IDatabase {
                     mMailIDs.add(rs.getInt("iMailID"));
                 }
 
-                // Set all messages as unmarked for deletion
-                mMarkedDeleted = new boolean[mMailIDs.size()];
-                Arrays.fill(mMarkedDeleted, false);
-                // Subtract 1 to ignore zeroth index
-                mNumUndeleted = mMailIDs.size() - 1;
-                mLoggedIn = true;
-
-                System.out.println("iMailIDs of messages for user "
-                        + mUsername + ": " + mMailIDs);
-                System.out.println("Size of each message in octets:");
-                for (int i = 1; i < mMailIDs.size(); i++) {
-                    System.out.println(mMailIDs.get(i) + " "
-                            + getOctets(i));
-                }
+                rs.close();
+                statement.close();
 
             } catch (SQLException e) {
                 Log.e(TAG, "pass: Failed to execute PASS command", e);
             }
+
+            // Set all messages as unmarked for deletion
+            mMarkedDeleted = new boolean[mMailIDs.size()];
+            Arrays.fill(mMarkedDeleted, false);
+            // Subtract 1 to ignore zeroth index
+            mNumUndeleted = mMailIDs.size() - 1;
+            mLoggedIn = true;
+
+            System.out.println("iMailIDs of messages for user "
+                    + mUsername + ": " + mMailIDs);
+            System.out.println("Size of each message in octets:");
+            for (int i = 1; i < mMailIDs.size(); i++) {
+                System.out.println(mMailIDs.get(i) + " "
+                        + getOctets(i));
+            }
+
             return "+OK maildrop locked and ready";
 
         } else {
@@ -190,11 +202,17 @@ public class EmailDatabase implements IDatabase {
             String fullMessageBody = "";
 
             try {
-                ResultSet rs = mStatement.executeQuery(
-                        "SELECT txMailContent FROM m_Mail WHERE iMailID = "
-                                + mMailIDs.get(messageNumber));
+                PreparedStatement statement = mConnection.prepareStatement(
+                        "SELECT txMailContent FROM m_Mail WHERE iMailID = ? "
+                );
+                statement.setInt(1, mMailIDs.get(messageNumber));
+                ResultSet rs = statement.executeQuery();
+
                 rs.next();
                 fullMessageBody = rs.getString("txMailContent");
+
+                rs.close();
+                statement.close();
 
             } catch (SQLException e) {
                 Log.e(TAG, "getMessage: Failed to get message " + messageNumber,
@@ -251,9 +269,12 @@ public class EmailDatabase implements IDatabase {
             // Return UIDL for all unmarked messages
             try {
                 StringBuilder response = new StringBuilder("+OK").append(CRLF);
-                ResultSet rs = mStatement.executeQuery(
-                        "SELECT iMailID, vchUIDL FROM m_Mail WHERE iMaildropID"
-                                + " = " + mMaildropID);
+                PreparedStatement statement = mConnection.prepareStatement(
+                        "SELECT iMailID, vchUIDL FROM m_Mail WHERE iMaildropID = ? "
+                );
+                statement.setInt(1, mMaildropID);
+                ResultSet rs = statement.executeQuery();
+
                 while (rs.next()) {
                     int i = getMessageNumber(rs.getInt("iMailID"));
                     if (!mMarkedDeleted[i]) {
@@ -262,6 +283,10 @@ public class EmailDatabase implements IDatabase {
                     }
                 }
                 response.append(".");
+
+                rs.close();
+                statement.close();
+
                 return response.toString();
 
             } catch (SQLException e) {
@@ -272,11 +297,19 @@ public class EmailDatabase implements IDatabase {
                 && !mMarkedDeleted[messageNumber]) {
             // Return UIDL for specific unmarked message
             try {
-                ResultSet rs = mStatement.executeQuery(
-                        "SELECT vchUIDL FROM m_Mail WHERE iMailID = "
-                                + mMailIDs.get(messageNumber));
+                PreparedStatement statement = mConnection.prepareStatement(
+                        "SELECT vchUIDL FROM m_Mail WHERE iMailID = ? "
+                );
+                statement.setInt(1, mMailIDs.get(messageNumber));
+                ResultSet rs = statement.executeQuery();
                 rs.next();
-                return "+OK " + messageNumber + " " + rs.getString("vchUIDL");
+
+                String uidl = rs.getString("vchUIDL");
+
+                rs.close();
+                statement.close();
+
+                return "+OK " + messageNumber + " " + uidl;
 
             } catch (SQLException e) {
                 Log.e(TAG, "uidl: Failed to execute UIDL command for message "
@@ -292,19 +325,21 @@ public class EmailDatabase implements IDatabase {
         int numDeleted = 0;
 
         try {
-            unlockMaildrop();
+            setMaildropLocked(false);
 
             // Delete all marked messages and end session
             for (int i = 1; i < mMarkedDeleted.length; i++) {
                 if (mMarkedDeleted[i]) {
-                    mStatement.executeUpdate(
-                            "DELETE FROM m_Mail WHERE iMailID = "
-                                    + mMailIDs.get(i));
+                    PreparedStatement statement = mConnection.prepareStatement(
+                            "DELETE FROM m_Mail WHERE iMailID = ? "
+                    );
+                    statement.setInt(1, mMailIDs.get(i));
+                    statement.executeUpdate();
+                    statement.close();
                     numDeleted++;
                 }
             }
 
-            mStatement.close();
             mConnection.close();
 
         } catch (SQLException e) {
@@ -321,9 +356,8 @@ public class EmailDatabase implements IDatabase {
     public void timeout() {
         try {
             if (mLoggedIn) {
-                unlockMaildrop();
+                setMaildropLocked(false);
             }
-            mStatement.close();
             mConnection.close();
 
         } catch (SQLException e) {
@@ -356,20 +390,33 @@ public class EmailDatabase implements IDatabase {
         int totalOctets = 0;
 
         String query = "SELECT iMailID, LENGTH(txMailContent) AS octets"
-                + " FROM m_Mail WHERE iMaildropID = " + mMaildropID;
+                + " FROM m_Mail WHERE iMaildropID = ? ";
+
         if (messageNumber > 0) {
             // Find size of specific message instead of total size
-            query += " AND iMailID = " + mMailIDs.get(messageNumber);
+            query += " AND iMailID = ? ";
         }
 
         try {
-            ResultSet rs = mStatement.executeQuery(query);
+            PreparedStatement statement = mConnection.prepareStatement(query);
+            statement.setInt(1, mMaildropID);
+
+            if (messageNumber > 0) {
+                // Find size of specific message instead of total size
+                statement.setInt(2, mMailIDs.get(messageNumber));
+            }
+
+            ResultSet rs = statement.executeQuery(query);
             while (rs.next()) {
                 int i = getMessageNumber(rs.getInt("iMailID"));
                 if (!mMarkedDeleted[i]) {
                     totalOctets += rs.getInt("octets");
                 }
             }
+
+            rs.close();
+            statement.close();
+
         } catch (SQLException e) {
             Log.e(TAG, "getOctets: Failed to retrieve size of message "
                     + messageNumber, e);
@@ -379,21 +426,20 @@ public class EmailDatabase implements IDatabase {
     }
 
     /**
-     * Locks the maildrop (identified by the user's iMaildropID) by setting the
-     * tiLocked field to 1.
+     * Locks/unlocks the maildrop (identified by the user's iMaildropID) by
+     * setting the tiLocked field appropriately.
+     *
+     * @param locked <code>true</code> to lock, <code>false</code> to unlock.
+     * @throws SQLException
      */
-    private void lockMaildrop() throws SQLException {
-        mStatement.executeUpdate("UPDATE m_Maildrop SET tiLocked = 1 "
-                + "WHERE vchUsername = '" + mUsername + "'");
-    }
-
-    /**
-     * Locks the maildrop (identified by the user's iMaildropID) by setting the
-     * tiLocked field to 0.
-     */
-    private void unlockMaildrop() throws SQLException {
-        mStatement.executeUpdate("UPDATE m_Maildrop SET tiLocked = 0 "
-                + "WHERE vchUsername = '" + mUsername + "'");
+    private void setMaildropLocked(boolean locked) throws SQLException {
+        PreparedStatement statement = mConnection.prepareStatement(
+                "UPDATE m_Maildrop SET tiLocked = ? WHERE vchUsername = ? "
+        );
+        statement.setInt(1, (locked ? 1 : 0));
+        statement.setString(2, mUsername);
+        statement.executeUpdate();
+        statement.close();
     }
 
 }
