@@ -11,7 +11,6 @@ public class TestCommandInterpreter {
 
     private static final String OK = CommandInterpreter.OK;
     private static final String CRLF = "\r\n";
-    private static final String ERR = "-ERR";
 
     /** Mocked IDatabase */
     private IDatabase mDatabase;
@@ -60,21 +59,23 @@ public class TestCommandInterpreter {
         String request = "USER " + uname;
         Mockito.doReturn(OK).when(mDatabase).user(uname);
 
+        String expected = concat(CommandInterpreter.ERR_USER_CMD_ALREADY_ISSUED,
+                request);
         mCi.handleInput(request);
         String response = mCi.handleInput(request);
 
         Mockito.verify(mDatabase, Mockito.times(1)).user(uname);
-        Assert.assertTrue(response.contains(ERR));
+        Assert.assertEquals(expected, response);
     }
 
     @Test
     public void testUserMissingArgsReturnsError() {
         String request = "USER";
 
+        String expected = concat(CommandInterpreter.ERR_MISSINGARGS, request);
         String response = mCi.handleInput(request);
 
         Mockito.verify(mDatabase, Mockito.times(0)).user(Mockito.anyString());
-        String expected = concat(CommandInterpreter.ERR_MISSINGARGS, request);
         Assert.assertEquals(expected, response);
     }
 
@@ -130,10 +131,12 @@ public class TestCommandInterpreter {
         String password = "password";
         String request = "PASS " + password;
 
+        String expected = concat(CommandInterpreter.ERR_USER_CMD_NOT_ISSUED,
+                request);
         String response = mCi.handleInput(request);
 
         Mockito.verify(mDatabase, Mockito.times(0)).pass(password);
-        Assert.assertTrue(response.contains(ERR));
+        Assert.assertEquals(expected, response);
     }
 
     @Test
@@ -141,10 +144,11 @@ public class TestCommandInterpreter {
         executeValidUser();
         String request = "PASS";
 
+        String expected = concat(CommandInterpreter.ERR_MISSINGARGS, request);
         String response = mCi.handleInput(request);
 
         Mockito.verify(mDatabase, Mockito.times(0)).pass(Mockito.anyString());
-        Assert.assertTrue(response.contains(ERR));
+        Assert.assertEquals(expected, response);
     }
 
     //////////////////////////////////////////////////////////////////////////

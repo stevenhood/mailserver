@@ -21,6 +21,10 @@ public class CommandInterpreter {
     /** Error message indicating a command issued in the UPDATE state. */
     public static final String ERR_CMD_UPDATE =
             "-ERR cannot issue commands in UPDATE state";
+    public static final String ERR_USER_CMD_ALREADY_ISSUED =
+            "-ERR USER command already issued";
+    public static final String ERR_USER_CMD_NOT_ISSUED =
+            "-ERR no USER command issued";
     public static final String ERR_ARGS_NON_INT =
             "-ERR one or more arguments must be integer values";
     public static final String ERR_NEG_LINE_COUNT = "-ERR negative line count";
@@ -202,7 +206,7 @@ public class CommandInterpreter {
     private String user(String[] arguments) {
         // Required argument mailbox name
         if (mIsUserIssued) {
-            return "-ERR USER command already issued";
+            return ERR_USER_CMD_ALREADY_ISSUED;
 
         } else if (arguments.length < 2) {
             return ERR_MISSINGARGS;
@@ -231,7 +235,7 @@ public class CommandInterpreter {
     private String pass(String[] arguments) {
         // Required argument password and USER command issued prior
         if (!mIsUserIssued) {
-            return "-ERR no USER command issued";
+            return ERR_USER_CMD_NOT_ISSUED;
 
         } else if (arguments.length < 2) {
             return ERR_MISSINGARGS;
